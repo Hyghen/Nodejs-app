@@ -26,7 +26,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: chitransh8824/Nodejs-app:latest
+          tags: chitransh8824/nodejs-app:latest
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
