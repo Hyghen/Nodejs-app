@@ -5,13 +5,20 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+  Build:
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+  
+  
+  Setup-Docker:
+     runs-on: self-hosted
+     needs: Build
 
+     steps:
+      - uses: actions/checkout@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -20,7 +27,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+          
+          
+  Docker-Build-Push-Image:
+     runs-on: self-hosted
+     needs: Setup-Docker
 
+     steps:
+      - uses: actions/checkout@v3
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
@@ -28,6 +42,13 @@ jobs:
           push: true
           tags: chitransh8824/nodejs-app:latest
 
+  
+  Kubectl-Installation:
+     runs-on: self-hosted
+     needs: Docker-Build-Push-Image
+
+     steps:
+      - uses: actions/checkout@v3
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
@@ -41,6 +62,12 @@ jobs:
       - name: Fix permissions
         run: chmod 600 ~/.kube/config
 
+  Kubernetes-Deployment:
+     runs-on: self-hosted
+     needs: Kubectl-Installation
+
+     steps:
+      - uses: actions/checkout@v3
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/deployment.yaml
